@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تغريدات مع إضافة صورة أو فيديو</title>
+    <style>
+        /* إعدادات عامة */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #15202b;
+            font-family: Arial, sans-serif;
+            color: white;
+            direction: rtl;
+            position: relative;
+        }
+
+        /* شريط التنقل */
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #192734;
+            padding: 10px 0;
+            font-size: 16px;
+            color: #8899a6;
+            border-bottom: 1px solid #38444d;
+        }
+
+        .navbar .active {
+            color: #1da1f2;
+            font-weight: bold;
+            border-bottom: 2px solid #1da1f2;
+            padding-bottom: 5px;
+        }
+
+        /* التغريدة */
+        .tweet {
+            border-bottom: 1px solid #38444d;
+            padding: 15px;
+            background-color: #192734;
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .user-info img {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-left: 10px;
+        }
+
+        .user-info div span {
+            color: #8899a6;
+            font-size: 13px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .tweet-text {
+            margin: 10px 0;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .tweet-img, .tweet-video {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        /* زر البلس */
+        .plus-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #1da1f2;
+            color: white;
+            border-radius: 50%;
+            font-size: 36px;
+            text-align: center;
+            line-height: 60px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .plus-button:hover {
+            background-color: #0d8bd8;
+        }
+
+        /* القائمة المنبثقة */
+        .menu {
+            position: fixed;
+            bottom: 90px;
+            left: 20px;
+            background-color: #192734;
+            border: 1px solid #38444d;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            width: 150px;
+        }
+
+        .menu button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 10px;
+            text-align: right;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .menu button:hover {
+            background-color: #38444d;
+        }
+
+        /* حقل النص */
+        .description-input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background-color: #38444d;
+            color: white;
+            border: 1px solid #1da1f2;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .delete-button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- شريط التنقل العلوي -->
+    <div class="navbar">
+        <div>متابعة</div>
+        <div class="active">لك</div>
+    </div>
+
+    <!-- التغريدات -->
+    <div id="tweets">
+        <!-- التغريدات المحفوظة سيتم إضافتها هنا تلقائيًا عند تحميل الصفحة -->
+    </div>
+
+    <!-- زر البلس -->
+    <div class="plus-button" id="plusButton">+</div>
+
+    <!-- القائمة المنبثقة -->
+    <div class="menu" id="menu">
+        <button id="addImage">وضع صورة</button>
+        <button id="addVideo">وضع فيديو</button>
+    </div>
+
+    <!-- إدخال ملف -->
+    <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*">
+
+    <script>
+        const plusButton = document.getElementById('plusButton');
+        const menu = document.getElementById('menu');
+        const addImageButton = document.getElementById('addImage');
+        const addVideoButton = document.getElementById('addVideo');
+        const fileInput = document.getElementById('fileInput');
+        const tweetsContainer = document.getElementById('tweets');
+
+        let currentFileType = '';
+        let descriptionInput = null;
+
+        // إظهار القائمة عند النقر على زر البلس
+        plusButton.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'flex' : 'none';
+        });
+
+        // اختيار ملف صورة
+        addImageButton.addEventListener('click', () => {
+            currentFileType = 'image';
+            fileInput.accept = 'image/*';
+            fileInput.click();
+        });
+
+        // اختيار ملف فيديو
+        addVideoButton.addEventListener('click', () => {
+            currentFileType = 'video';
+            fileInput.accept = 'video/*';
+            fileInput.click();
+        });
+
+        // التعامل مع الملف المُختار
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // إضافة حقل الوصف قبل رفع الملف
+                descriptionInput = document.createElement('input');
+                descriptionInput.type = 'text';
+                descriptionInput.placeholder = 'أضف وصفاً للصورة أو الفيديو';
+                descriptionInput.classList.add('description-input');
+                descriptionInput.required = true;  // اجبار المستخدم على الكتابة
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const tweet = document.createElement('div');
+                    tweet.classList.add('tweet');
+
+                    tweet.innerHTML = `
+                        <div class="user-info">
+                            <img src="https://i.imgur.com/DLM5GWL.png" alt="الصورة الشخصية">
+                            <div>
+                                <strong>Sex videos</strong><img style="width: 15px; height: 15px;" src="https://i.imgur.com/kX6XW0T.png"></a>
+                                
+                                <span>@sexvideos · الآن</span>
+                            </div>
+                        </div>
+                    `;
+
+                    // إضافة حقل الوصف قبل محتوى الصورة أو الفيديو
+                    tweet.appendChild(descriptionInput);
+
+                    // إضافة محتوى الصورة أو الفيديو
+                    let mediaElement;
+                    if (currentFileType === 'video') {
+                        mediaElement = `<video src="${e.target.result}" controls class="tweet-video"></video>`;
+                    } else if (currentFileType === 'image') {
+                        mediaElement = `<img src="${e.target.result}" class="tweet-img">`;
+                    }
+
+                    tweet.innerHTML += mediaElement;
+
+                    // إضافة زر الحذف بجانب اسم المستخدم
+                    const deleteButton = document.createElement('button');
+                    
+
+                    deleteButton.addEventListener('click', () => {
+                        
+                        saveTweets();  // حفظ التغييرات بعد الحذف
+                    });
+
+                    tweet.querySelector('.user-info').appendChild(deleteButton);  // إضافة زر الحذف بجانب اسم المستخدم
+                    tweetsContainer.prepend(tweet); // إضافة التغريدة
+
+
+                    
+                };
+                reader.readAsDataURL(file);
+            }
+            menu.style.display = 'none'; // إخفاء القائمة بعد اختيار الملف
+        });
+
+        // وظيفة لحفظ التغريدات في LocalStorage
+        function saveTweets() {
+            const tweets = tweetsContainer.innerHTML;
+            localStorage.setItem('tweets', tweets); // حفظ التغريدات في LocalStorage
+        }
+
+        // استرجاع التغريدات من LocalStorage عند تحميل الصفحة
+        window.addEventListener('load', () => {
+            const savedTweets = localStorage.getItem('tweets');
+            if (savedTweets) {
+                tweetsContainer.innerHTML = savedTweets; // استرجاع التغريدات المخزنة
+
+// إضافة زر الحذف للتغريدات القديمة
+                const allTweets = tweetsContainer.querySelectorAll('.tweet');
+                allTweets.forEach(tweet => {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-button');
+                    deleteButton.textContent = 'حذف';
+                    deleteButton.addEventListener('click', () => {
+                        tweet.remove(); // حذف التغريدة
+                        saveTweets();  // حفظ التغييرات بعد الحذف
+                    });
+                    tweet.querySelector('.user-info').appendChild(deleteButton);  // إضافة زر الحذف بجانب اسم المستخدم
+                });
+            }
+        });
+        
+    </script>
+</body>
+</html>
